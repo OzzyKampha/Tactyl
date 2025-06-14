@@ -7,7 +7,8 @@ import (
 
 func main() {
 	numFeatures := 2
-	model := tmffi.NewModel(numFeatures)
+	numClauses := 500
+	model := tmffi.NewModel(numFeatures, numClauses)
 	defer model.Free()
 
 	// XOR truth table
