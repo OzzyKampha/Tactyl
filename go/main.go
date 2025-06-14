@@ -6,22 +6,26 @@ import (
 )
 
 func main() {
-	numFeatures := 4
+	numFeatures := 2
 	model := tmffi.NewModel(numFeatures)
 	defer model.Free()
 
-	inputs := []uint64{
-		0b0011,
-		0b0101,
-		0b1111,
-	}
-	feedbacks := []int32{1, 2, 1}
+	// XOR truth table
+	inputs := []uint64{0b00, 0b01, 0b10, 0b11}
+	targets := []int{0, 1, 1, 0}
 
+	// Train for several epochs
+	epochs := 20
+	for epoch := 0; epoch < epochs; epoch++ {
+		for i, input := range inputs {
+			model.Train(input, int32(targets[i]))
+		}
+	}
+
+	// Test after training
+	fmt.Println("\nXOR predictions after training:")
 	for i, input := range inputs {
-		fmt.Printf("\n--- Training step %d: input = %04b, feedback = %d ---\n", i+1, input, feedbacks[i])
-		model.Train(input, feedbacks[i])
+		prediction := model.Predict(input)
+		fmt.Printf("Input %02b: predicted=%d, target=%d\n", input, prediction, targets[i])
 	}
-
-	score := model.Predict(inputs[len(inputs)-1])
-	fmt.Println("Prediction score:", score)
 }

@@ -10,7 +10,7 @@ typedef struct TactylModel TactylModel;
 
 TactylModel* tm_create_model(size_t num_features);
 void tm_free_model(TactylModel* ptr);
-void tm_train(TactylModel* ptr, uint64_t input, int32_t feedback);
+void tm_train(TactylModel* ptr, uint64_t input, int32_t target);
 int32_t tm_predict(const TactylModel* ptr, uint64_t input);
 */
 import "C"
@@ -23,8 +23,8 @@ func NewModel(numFeatures int) *Model {
 	return &Model{ptr: C.tm_create_model(C.ulong(numFeatures))}
 }
 
-func (m *Model) Train(input uint64, feedback int32) {
-	C.tm_train(m.ptr, C.uint64_t(input), C.int32_t(feedback))
+func (m *Model) Train(input uint64, target int32) {
+	C.tm_train(m.ptr, C.uint64_t(input), C.int32_t(target))
 }
 
 func (m *Model) Predict(input uint64) int {
