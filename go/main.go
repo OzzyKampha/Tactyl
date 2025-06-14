@@ -5,70 +5,22 @@ import (
 	"tactyl/tmffi"
 )
 
-func printTrainingExample(input []uint8, target int32, prediction int32) {
-	fmt.Printf("Input: %v\n", input)
-	fmt.Printf("Target: %d, Prediction: %d\n", target, prediction)
-	fmt.Printf("Correct: %v\n\n", target == prediction)
-}
-
 func main() {
-	// Configure TM parameters
-	tmffi.SetSpecificity(10.0) // s = 10
-	tmffi.SetThreshold(250.0)  // threshold = 250 (half of 500 clauses)
+	model := tmffi.NewModel()
+	defer model.Free()
 
-	// XOR training data
-	trainingData := [][]uint8{
-		{0, 0}, // 0
-		{0, 1}, // 1
-		{1, 0}, // 1
-		{1, 1}, // 0
+	inputs := []uint64{
+		0b0011,
+		0b0101,
+		0b1111,
 	}
-	targets := []int32{0, 1, 1, 0}
+	feedbacks := []int32{1, 2, 1}
 
-	fmt.Println("Starting Tsetlin Machine Training (XOR)...")
-	fmt.Println("============================================")
-
-	// Train the TM for multiple epochs
-	epochs := 100
-	for epoch := 0; epoch < epochs; epoch++ {
-		correct := 0
-		fmt.Printf("\nEpoch %d:\n", epoch+1)
-		fmt.Println("-------------------")
-
-		for i, input := range trainingData {
-			// Train
-			tmffi.Train(input, targets[i])
-
-			// Predict
-			prediction := tmffi.Predict(input)
-
-			// Print results
-			printTrainingExample(input, targets[i], prediction)
-
-			if prediction == targets[i] {
-				correct++
-			}
-		}
-
-		accuracy := float64(correct) / float64(len(trainingData)) * 100
-		fmt.Printf("Epoch %d Accuracy: %.2f%%\n", epoch+1, accuracy)
+	for i, input := range inputs {
+		fmt.Printf("\n--- Training step %d: input = %04b, feedback = %d ---\n", i+1, input, feedbacks[i])
+		model.Train(input, feedbacks[i])
 	}
 
-	// Test with XOR examples
-	fmt.Println("\nTesting with XOR Examples:")
-	fmt.Println("=========================")
-
-	testData := [][]uint8{
-		{0, 0},
-		{0, 1},
-		{1, 0},
-		{1, 1},
-	}
-	testTargets := []int32{0, 1, 1, 0}
-
-	for i, input := range testData {
-		prediction := tmffi.Predict(input)
-		fmt.Printf("\nTest Example %d:\n", i+1)
-		printTrainingExample(input, testTargets[i], prediction)
-	}
+	score := model.Predict(inputs[len(inputs)-1])
+	fmt.Println("Prediction score:", score)
 }
