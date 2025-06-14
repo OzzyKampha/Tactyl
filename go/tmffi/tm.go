@@ -12,6 +12,8 @@ TactylModel* tm_create_model(size_t num_features, size_t num_clauses, int32_t t,
 void tm_free_model(TactylModel* ptr);
 void tm_train(TactylModel* ptr, uint64_t input, int32_t target);
 int32_t tm_predict(const TactylModel* ptr, uint64_t input);
+int32_t tm_predict_debug(const TactylModel* ptr, uint64_t input);
+void tm_print_state_histogram(const TactylModel* ptr);
 */
 import "C"
 
@@ -31,7 +33,15 @@ func (m *Model) Predict(input uint64) int {
 	return int(C.tm_predict(m.ptr, C.uint64_t(input)))
 }
 
+func (m *Model) PredictDebug(input uint64) int {
+	return int(C.tm_predict_debug(m.ptr, C.uint64_t(input)))
+}
+
 func (m *Model) Free() {
 	C.tm_free_model(m.ptr)
 	m.ptr = nil
+}
+
+func (m *Model) PrintStateHistogram() {
+	C.tm_print_state_histogram(m.ptr)
 }
