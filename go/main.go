@@ -6,7 +6,8 @@ import (
 )
 
 func main() {
-	model := tmffi.NewModel()
+	numFeatures := 4
+	model := tmffi.NewModel(numFeatures)
 	defer model.Free()
 
 	inputs := []uint64{

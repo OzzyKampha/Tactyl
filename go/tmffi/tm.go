@@ -8,7 +8,7 @@ package tmffi
 struct TactylModel;
 typedef struct TactylModel TactylModel;
 
-TactylModel* tm_create_model();
+TactylModel* tm_create_model(size_t num_features);
 void tm_free_model(TactylModel* ptr);
 void tm_train(TactylModel* ptr, uint64_t input, int32_t feedback);
 int32_t tm_predict(const TactylModel* ptr, uint64_t input);
@@ -19,8 +19,8 @@ type Model struct {
 	ptr *C.TactylModel
 }
 
-func NewModel() *Model {
-	return &Model{ptr: C.tm_create_model()}
+func NewModel(numFeatures int) *Model {
+	return &Model{ptr: C.tm_create_model(C.ulong(numFeatures))}
 }
 
 func (m *Model) Train(input uint64, feedback int32) {
