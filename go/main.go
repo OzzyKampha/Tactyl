@@ -8,7 +8,9 @@ import (
 func main() {
 	numFeatures := 2
 	numClauses := 500
-	model := tmffi.NewModel(numFeatures, numClauses)
+	t := 250
+	s := 3.9
+	model := tmffi.NewModel(numFeatures, numClauses, t, s)
 	defer model.Free()
 
 	// XOR truth table
@@ -16,7 +18,8 @@ func main() {
 	targets := []int{0, 1, 1, 0}
 
 	// Train for several epochs
-	epochs := 20
+	epochs := 200
+
 	for epoch := 0; epoch < epochs; epoch++ {
 		for i, input := range inputs {
 			model.Train(input, int32(targets[i]))
