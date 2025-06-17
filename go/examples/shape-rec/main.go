@@ -24,59 +24,59 @@ func main() {
 	numClauses := 1000 // Reduced from 2000 to avoid overfitting
 	numClasses := 8    // 8 different shapes
 	t := 500           // Reduced threshold for better learning
-	s := 5.0           // Reduced specificity for more balanced learning
-	model := tmffi.NewModel(numFeatures, numClauses, numClasses, t, s)
+	s := 2.0           // Reduced specificity for more balanced learning
+	model := tmffi.NewModel(numFeatures, numClasses, 3.9, numClauses, numClauses, uint8(t), float32(s))
 	defer model.Free()
 
 	// Training data for shape recognition
-	inputs := []uint64{
+	inputs := [][]bool{
 		// Circle variations (curved, no corners, symmetric)
-		0b100, // Basic circle
-		0b101, // Circle with slight variation
-		0b110, // Circle with another variation
-		0b111, // Circle with both variations
+		{false, false, true}, // Basic circle
+		{false, false, true}, // Circle with slight variation
+		{false, false, true}, // Circle with another variation
+		{false, false, true}, // Circle with both variations
 
 		// Square variations (straight, corners, symmetric)
-		0b010, // Basic square
-		0b011, // Square with slight variation
-		0b110, // Square with another variation
-		0b111, // Square with different variation
+		{true, true, true}, // Basic square
+		{true, true, true}, // Square with slight variation
+		{true, true, true}, // Square with another variation
+		{true, true, true}, // Square with different variation
 
 		// Triangle variations (straight, corners, asymmetric)
-		0b001, // Basic triangle
-		0b101, // Triangle with slight variation
-		0b011, // Triangle with another variation
-		0b111, // Triangle with both variations
+		{true, true, false}, // Basic triangle
+		{true, true, false}, // Triangle with slight variation
+		{true, true, false}, // Triangle with another variation
+		{true, true, false}, // Triangle with both variations
 
 		// Rectangle variations (straight, corners, symmetric)
-		0b010, // Basic rectangle
-		0b011, // Rectangle with slight variation
-		0b110, // Rectangle with another variation
-		0b111, // Rectangle with different variation
+		{true, true, true}, // Basic rectangle
+		{true, true, true}, // Rectangle with slight variation
+		{true, true, true}, // Rectangle with another variation
+		{true, true, true}, // Rectangle with different variation
 
 		// Star variations (straight, corners, asymmetric)
-		0b001, // Basic star
-		0b101, // Star with slight variation
-		0b011, // Star with another variation
-		0b111, // Star with different variation
+		{true, true, false}, // Basic star
+		{true, true, false}, // Star with slight variation
+		{true, true, false}, // Star with another variation
+		{true, true, false}, // Star with different variation
 
 		// Diamond variations (straight, corners, symmetric)
-		0b010, // Basic diamond
-		0b011, // Diamond with slight variation
-		0b110, // Diamond with another variation
-		0b111, // Diamond with different variation
+		{true, true, true}, // Basic diamond
+		{true, true, true}, // Diamond with slight variation
+		{true, true, true}, // Diamond with another variation
+		{true, true, true}, // Diamond with different variation
 
 		// Hexagon variations (curved, corners, symmetric)
-		0b110, // Basic hexagon
-		0b111, // Hexagon with slight variation
-		0b010, // Hexagon with another variation
-		0b101, // Hexagon with different variation
+		{false, true, true}, // Basic hexagon
+		{false, true, true}, // Hexagon with slight variation
+		{false, true, true}, // Hexagon with another variation
+		{false, true, true}, // Hexagon with different variation
 
 		// Octagon variations (curved, corners, symmetric)
-		0b110, // Basic octagon
-		0b111, // Octagon with slight variation
-		0b010, // Octagon with another variation
-		0b101, // Octagon with different variation
+		{false, true, true}, // Basic octagon
+		{false, true, true}, // Octagon with slight variation
+		{false, true, true}, // Octagon with another variation
+		{false, true, true}, // Octagon with different variation
 	}
 
 	// Target classes for each input (0-7 for 8 shapes)
@@ -107,7 +107,7 @@ func main() {
 
 	for epoch := 0; epoch < epochs; epoch++ {
 		for i, input := range inputs {
-			model.Train(input, int32(targets[i]))
+			model.Train(input, targets[i])
 		}
 
 		// Print accuracy every 50 epochs
@@ -138,22 +138,22 @@ func main() {
 	}
 
 	// Test on unique patterns
-	testInputs := []uint64{
-		0b000, // Circle
-		0b111, // Square
-		0b111, // Triangle
-		0b111, // Rectangle
-		0b000, // Oval
-		0b110, // Star
-		0b000, // Heart
-		0b111, // Pentagon
+	testInputs := [][]bool{
+		{false, false, true}, // Circle
+		{true, true, true},   // Square
+		{true, true, false},  // Triangle
+		{true, true, true},   // Rectangle
+		{false, false, true}, // Oval
+		{true, true, false},  // Star
+		{false, false, true}, // Heart
+		{true, true, true},   // Pentagon
 	}
 	testTargets := []int{0, 1, 2, 3, 4, 5, 6, 7}
 
 	for i, input := range testInputs {
 		prediction := model.Predict(input)
 		confusionMatrix[testTargets[i]][prediction]++
-		fmt.Printf("Input %03b (Features: %s): predicted=%s, target=%s\n",
+		fmt.Printf("Input %v (Features: %s): predicted=%s, target=%s\n",
 			input,
 			describeFeatures(input),
 			shapeNames[prediction],
@@ -208,21 +208,21 @@ func main() {
 
 	// Test with variations
 	fmt.Println("\nTesting with variations:")
-	variationInputs := []uint64{
-		0b001, // Almost circle but asymmetric
-		0b101, // Almost square but asymmetric
-		0b010, // Has corners but curved
+	variationInputs := [][]bool{
+		{false, false, false}, // Almost circle but asymmetric
+		{true, true, false},   // Almost square but asymmetric
+		{false, true, true},   // Has corners but curved
 	}
 	for _, input := range variationInputs {
 		prediction := model.Predict(input)
-		fmt.Printf("Input %03b (Features: %s): predicted=%s\n",
+		fmt.Printf("Input %v (Features: %s): predicted=%s\n",
 			input,
 			describeFeatures(input),
 			shapeNames[prediction])
 	}
 }
 
-func calculateAccuracy(model *tmffi.Model, inputs []uint64, targets []int) float64 {
+func calculateAccuracy(model *tmffi.Model, inputs [][]bool, targets []int) float64 {
 	correct := 0
 	for i, input := range inputs {
 		prediction := model.Predict(input)
@@ -310,19 +310,19 @@ func calculateMicroAverages(confusionMatrix [][]int) (float64, float64, float64)
 	return precision, recall, f1
 }
 
-func describeFeatures(input uint64) string {
+func describeFeatures(input []bool) string {
 	features := []string{}
-	if input&0b100 != 0 {
+	if input[0] {
 		features = append(features, "straight")
 	} else {
 		features = append(features, "curved")
 	}
-	if input&0b010 != 0 {
+	if input[1] {
 		features = append(features, "corners")
 	} else {
 		features = append(features, "no corners")
 	}
-	if input&0b001 != 0 {
+	if input[2] {
 		features = append(features, "symmetric")
 	} else {
 		features = append(features, "asymmetric")

@@ -5,36 +5,57 @@ package tmffi
 #include <stdint.h>
 #include <stdlib.h>
 
-struct TactylModel;
-typedef struct TactylModel TactylModel;
+typedef struct FfiTsetlinMachine FfiTsetlinMachine;
 
-TactylModel* tm_create_model(size_t num_features, size_t num_clauses, size_t num_classes, int32_t t, double s);
-void tm_free_model(TactylModel* ptr);
-void tm_train(TactylModel* ptr, uint64_t input, int32_t target);
-int32_t tm_predict(const TactylModel* ptr, uint64_t input);
-int32_t tm_predict_debug(const TactylModel* ptr, uint64_t input);
-void tm_print_state_histogram(const TactylModel* ptr);
+FfiTsetlinMachine* tm_create_model(int input_size, int num_classes, double s, int num_clauses, int t, unsigned char ta_states, float dropout_rate);
+void tm_free_model(FfiTsetlinMachine* ptr);
+void tm_train_model(FfiTsetlinMachine* ptr, unsigned char* input_ptr, int input_len, int target_class);
+int tm_predict_debug(FfiTsetlinMachine* ptr, unsigned char* input_ptr, int input_len);
+void tm_print_state_histogram(FfiTsetlinMachine* ptr);
 */
 import "C"
+import "unsafe"
 
 type Model struct {
-	ptr *C.TactylModel
+	ptr *C.FfiTsetlinMachine
 }
 
-func NewModel(numFeatures, numClauses, numClasses, t int, s float64) *Model {
-	return &Model{ptr: C.tm_create_model(C.size_t(numFeatures), C.size_t(numClauses), C.size_t(numClasses), C.int32_t(t), C.double(s))}
+func NewModel(inputSize, numClasses int, s float64, numClauses int, t int, taStates uint8, dropoutRate float32) *Model {
+	return &Model{ptr: C.tm_create_model(
+		C.int(inputSize),
+		C.int(numClasses),
+		C.double(s),
+		C.int(numClauses),
+		C.int(t),
+		C.uchar(taStates),
+		C.float(dropoutRate),
+	)}
 }
 
-func (m *Model) Train(input uint64, target int32) {
-	C.tm_train(m.ptr, C.uint64_t(input), C.int32_t(target))
+func (m *Model) Train(input []bool, targetClass int) {
+	inputLen := len(input)
+	inputArr := make([]C.uchar, inputLen)
+	for i, b := range input {
+		if b {
+			inputArr[i] = 1
+		} else {
+			inputArr[i] = 0
+		}
+	}
+	C.tm_train_model(m.ptr, (*C.uchar)(unsafe.Pointer(&inputArr[0])), C.int(inputLen), C.int(targetClass))
 }
 
-func (m *Model) Predict(input uint64) int {
-	return int(C.tm_predict(m.ptr, C.uint64_t(input)))
-}
-
-func (m *Model) PredictDebug(input uint64) int {
-	return int(C.tm_predict_debug(m.ptr, C.uint64_t(input)))
+func (m *Model) Predict(input []bool) int {
+	inputLen := len(input)
+	inputArr := make([]C.uchar, inputLen)
+	for i, b := range input {
+		if b {
+			inputArr[i] = 1
+		} else {
+			inputArr[i] = 0
+		}
+	}
+	return int(C.tm_predict_debug(m.ptr, (*C.uchar)(unsafe.Pointer(&inputArr[0])), C.int(inputLen)))
 }
 
 func (m *Model) Free() {
